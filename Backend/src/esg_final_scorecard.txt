@@ -1,0 +1,6 @@
+Environmental -> Terms: 552 (62.23%), Weighted Score: 1083 (59.64%)
+Social -> Terms: 198 (22.32%), Weighted Score: 516 (28.41%)
+Governance -> Terms: 137 (15.45%), Weighted Score: 217 (11.95%)
+
+Total Terms: 887
+Total Weighted ESG Risk Score: 1816

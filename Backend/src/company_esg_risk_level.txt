@@ -1,0 +1,3 @@
+Company ESG Risk Level: High Risk
+Total ESG Terms: 887
+Total ESG Weighted Score: 1816
