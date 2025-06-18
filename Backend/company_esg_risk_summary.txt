@@ -1,0 +1,34 @@
+📄 Company ESG Risk Summary Report
+    ====================================
+    🏢 Company Name       : Unknown
+    🕒 Date of Analysis   : 2025-06-17 16:28:08
+    📊 Total ESG Terms    : 371
+    ⚖️  Total Weighted ESG Score : 641
+    🔍 Final ESG Risk Level      : High Risk
+
+    🚨 Highest Risky Sentence:
+    "un sdgs aligned
+infosys | esg report 2022-23
+external document © 2023 infosys limited 09
+environment
+performance on environmental goals
+esg report 2022-23
+environment vision
+serve the preservation of our planet by shaping and sharing technology solutions
+material topics ambitions progress in fiscal 2023
+• maintaining the carbon neutrality across scope 1, 2 • carbon neutral across scope 1, 2 and 3 emissions
+and 3 emissions every year
+• reduced scope 1 and 2 ghg emissions by 49.92% over the
+• reducing absolute scope 1 and 2 greenhouse gas bau scenario
+climate change (ghg) emissions by 75%(1)
+• reduced absolute scope 3 emissions by 50.15% over the
+• reducing absolute scope 3 ghg emissions by 30%(2) 2020 baseline
+• engaging clients on climate actions through our • >30% of our client engagements include climate-change
+solutions solutions
+water • maintaining 100% wastewater recycling every year • 100% of the wastewater in our campuses is recycled
+• we embarked on a journey of obtaining true zero waste
+waste • ensuring zero waste to landfill certification through gbci for our owned campuses in
+bengaluru, chennai and pune in fiscal 2023
+note
+(1) corresponds to 75% renewable energy usage globally."
+    
