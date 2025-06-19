@@ -271,67 +271,70 @@ return (
       </div>
 
       {/* Upload Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8 transition-colors duration-300">
-        <div className="text-center">
-          <div className="mb-6">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-4">
-              <Upload className="text-white" size={24} />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Upload Document for Analysis
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Supported formats: PDF, DOC, DOCX, TXT
-            </p>
-          </div>
+<div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8 transition-colors duration-300">
+  <div className="text-center">
+    <div className="mb-6">
+      <div className="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-4">
+        <Upload className="text-white" size={24} />
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        Upload Document for Analysis
+      </h3>
+      <p className="text-gray-600 dark:text-gray-400">
+        Supported formats: PDF, DOC, DOCX, TXT
+      </p>
+    </div>
 
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors duration-200">
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx,.txt"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer flex flex-col items-center"
-            >
-              <FileText className="text-gray-400 dark:text-gray-500 mb-3" size={48} />
-              <span className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Click to upload or drag and drop
-              </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Maximum file size: 50MB
-              </span>
-            </label>
-          </div>
+    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors duration-200">
+      <input
+        type="file"
+        accept=".pdf,.doc,.docx,.txt"
+        onChange={handleFileUpload}
+        className="hidden"
+        id="file-upload"
+      />
+      <label
+        htmlFor="file-upload"
+        className="cursor-pointer flex flex-col items-center"
+      >
+        <FileText className="text-gray-400 dark:text-gray-500 mb-3" size={48} />
+        <span className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Click to upload or drag and drop
+        </span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          Maximum file size: 50MB
+        </span>
+      </label>
+    </div>
 
-          {uploadedFile && (
-            <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FileText className="text-emerald-600 dark:text-emerald-400" size={20} />
-                  <div className="text-left">
-                    <p className="font-medium text-emerald-800 dark:text-emerald-200">
-                      {uploadedFile.name}
-                    </p>
-                    <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                      {formatFileSize(uploadedFile.size)} • Uploaded {uploadedFile.uploadDate.toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-                {isProcessing && (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-600 border-t-transparent"></div>
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">Processing...</span>
-                  </div>
-                )}
-              </div>
+    {/* Show spinner while processing */}
+    {isProcessing && (
+      <div className="flex justify-center items-center mt-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-emerald-600 border-t-transparent"></div>
+        <span className="ml-3 text-sm text-emerald-600 dark:text-emerald-400">Processing your file...</span>
+      </div>
+    )}
+
+    {/* Show uploaded file section after processing */}
+    {!isProcessing && uploadedFile && (
+      <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <FileText className="text-emerald-600 dark:text-emerald-400" size={20} />
+            <div className="text-left">
+              <p className="font-medium text-emerald-800 dark:text-emerald-200">
+                {uploadedFile.name}
+              </p>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                {formatFileSize(uploadedFile.size)} • Uploaded {uploadedFile.uploadDate.toLocaleTimeString()}
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
+    )}
+  </div>
+</div>
 
       {/* Download Report Section */}
       {reportGenerated && (
