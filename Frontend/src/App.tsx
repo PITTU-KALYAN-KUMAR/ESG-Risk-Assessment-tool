@@ -25,6 +25,7 @@ function App() {
   }, []);
 
   // Apply dark mode class to document
+  
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -167,7 +168,8 @@ function App() {
 return (
   <div className={`flex flex-col min-h-screen max-w-full transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
     {/* Navigation Bar */}
-    <nav className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+    <nav className={`${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}  shadow-md border-b transition-colors duration-300`}>
+
   {/* on lg: take the whole width instead of a centred 7‑xl box */}
   <div className="mx-auto max-w-7xl lg:max-w-none lg:w-full px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-16">
@@ -175,8 +177,11 @@ return (
       <div className="flex items-center space-x-4">
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-lg text-gray-600 dark:text-gray-300
-                     hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+          className={`p-2 rounded-lg ${
+            isDarkMode
+              ? 'text-gray-300 hover:bg-gray-700'
+              : 'text-gray-600 hover:bg-gray-100'
+          } transition-colors duration-200`}
           aria-label="Toggle menu"
         >
           {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -187,10 +192,10 @@ return (
             <Leaf className="text-white" size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h1 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
               ESG Risk Assessment
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>
               Environmental • Social • Governance
             </p>
           </div>
@@ -200,8 +205,7 @@ return (
       {/* ───── Right section ───── */}
       <button
         onClick={toggleDarkMode}
-        className="p-2 rounded-lg text-gray-600 dark:text-gray-300
-                   hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+        className={`${isDarkMode ? 'dark:text-gray-300 dark:hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} p-2 rounded-lg transition-colors duration-200`}
         aria-label="Toggle dark mode"
       >
         {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -230,27 +234,27 @@ return (
     )}
 
     {/* Sidebar */}
-    <div className={`fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className={`fixed left-0 top-0 h-full w-64 shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : ' -translate-x-full'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
             <Leaf className="text-white" size={20} />
           </div>
-          <span className="text-lg font-semibold text-gray-900 dark:text-white">ESG Portal</span>
+          <span className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} `}>ESG Portal</span>
         </div>
       </div>
       
       <nav className="mt-6">
         <div className="px-3 space-y-2">
-          <a href="#" className="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <a href="#" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
             <BarChart3 size={20} className="mr-3" />
             Dashboard
           </a>
-          <a href="#" className="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <a href="#" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
             <Shield size={20} className="mr-3" />
             About
           </a>
-          <a href="#" className="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <a href="#" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
             <FileText size={20} className="mr-3" />
             Help
           </a>
@@ -262,30 +266,30 @@ return (
     <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-auto">
       {/* Header Section */}
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
           Risk Assessment Analysis
         </h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           Upload your documents to analyze ESG compliance and generate comprehensive risk reports
         </p>
       </div>
 
       {/* Upload Section */}
-<div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8 transition-colors duration-300">
+<div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 '} rounded-xl shadow-lg border p-8 mb-8 transition-colors duration-300`}>
   <div className="text-center">
     <div className="mb-6">
       <div className="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-4">
         <Upload className="text-white" size={24} />
       </div>
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+      <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' :'text-gray-900'} mb-2`}>
         Upload Document for Analysis
       </h3>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className={`${isDarkMode ? 'text-gray-400': 'text-gray-600'}`}>
         Supported formats: PDF, DOC, DOCX, TXT
       </p>
     </div>
 
-    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors duration-200">
+    <div className={`border-2 border-dashed ${isDarkMode ? 'hover:border-emerald-500 border-gray-600 rounded-lg' : 'border-gray-300 hover:border-emerald-400 '} p-8 transition-colors duration-200`}>
       <input
         type="file"
         accept=".pdf,.doc,.docx,.txt"
@@ -297,11 +301,11 @@ return (
         htmlFor="file-upload"
         className="cursor-pointer flex flex-col items-center"
       >
-        <FileText className="text-gray-400 dark:text-gray-500 mb-3" size={48} />
-        <span className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <FileText className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mb-3`} size={48} />
+        <span className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
           Click to upload or drag and drop
         </span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+        <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
           Maximum file size: 50MB
         </span>
       </label>
@@ -311,21 +315,21 @@ return (
     {isProcessing && (
       <div className="flex justify-center items-center mt-6">
         <div className="animate-spin rounded-full h-8 w-8 border-4 border-emerald-600 border-t-transparent"></div>
-        <span className="ml-3 text-sm text-emerald-600 dark:text-emerald-400">Processing your file...</span>
+        <span className={`ml-3 text-sm ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Processing your file...</span>
       </div>
     )}
 
     {/* Show uploaded file section after processing */}
     {!isProcessing && uploadedFile && (
-      <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+      <div className={`${isDarkMode ? 'bg-emerald-900/20 border-emerald-800' : 'bg-emerald-50 border-emerald-200'}mt-6 p-4 rounded-lg border`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <FileText className="text-emerald-600 dark:text-emerald-400" size={20} />
+            <FileText className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} size={20} />
             <div className="text-left">
-              <p className="font-medium text-emerald-800 dark:text-emerald-200">
+              <p className={`font-medium  ${isDarkMode ? 'text-emerald-200' : 'text-emerald-800'}`}>
                 {uploadedFile.name}
               </p>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">
+              <p className={`text-sm  ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
                 {formatFileSize(uploadedFile.size)} • Uploaded {uploadedFile.uploadDate.toLocaleTimeString()}
               </p>
             </div>
@@ -338,17 +342,17 @@ return (
 
       {/* Download Report Section */}
       {reportGenerated && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8 transition-colors duration-300">
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-8 mb-8 transition-colors duration-300`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <Download className="text-white" size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   Report Generated Successfully
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Your ESG risk assessment report is ready for download
                 </p>
               </div>
@@ -365,8 +369,8 @@ return (
 
       {/* Report Display Section */}
       {reportGenerated && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 transition-colors duration-300">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}rounded-xl shadow-lg border p-8 transition-colors duration-300`}>
+            <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900 '} mb-6`}>
               ESG Risk Assessment Report
             </h3>
             
@@ -393,23 +397,23 @@ return (
 
             <div className="space-y-6">
               <div className="border-l-4 border-emerald-500 pl-6">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
                   Overall Risk Assessment
                 </h4>
-                <p className="text-gray-600 dark:text-gray-400 mb-3">
-                  Based on the analysis of your submitted document, the overall ESG risk level is classified as <strong className="text-emerald-600 dark:text-emerald-400">MEDIUM</strong>.
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                  Based on the analysis of your submitted document, the overall ESG risk level is classified as <strong className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>MEDIUM</strong>.
                 </p>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
                   <div className="bg-gradient-to-r from-emerald-500 to-teal-600 h-2 rounded-full" style={{ width: '85%' }}></div>
                 </div>
-                <span className="text-sm text-gray-500 dark:text-gray-400 mt-1 block">85% Compliance Rate</span>
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1 block`}>85% Compliance Rate</span>
               </div>
 
               <div className="border-l-4 border-blue-500 pl-6">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white mb-2' : 'text-gray-900'}`}>
                   Key Findings
                 </h4>
-                <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <ul className={`space-y-2  ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   <li className="flex items-start space-x-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></span>
                     <span>Strong governance frameworks and transparency measures in place</span>
@@ -426,10 +430,10 @@ return (
               </div>
 
               <div className="border-l-4 border-orange-500 pl-6">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   Recommendations
                 </h4>
-                <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <ul className={`space-y-2  ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   <li>• Implement comprehensive carbon footprint tracking</li>
                   <li>• Enhance supplier sustainability assessments</li>
                   <li>• Develop clearer ESG performance metrics</li>
@@ -438,8 +442,8 @@ return (
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className={`mt-8 p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 <strong>Generated:</strong> {new Date().toLocaleString()} • 
                 <strong> Document:</strong> {uploadedFile?.name} • 
                 <strong> Analysis ID:</strong> ESG-{Math.random().toString(36).substr(2, 9).toUpperCase()}

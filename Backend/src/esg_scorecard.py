@@ -11,6 +11,7 @@ def perform_analysis(extracted_text_path):
 
     # Step 2: Load SpaCy NLP model
     nlp = spacy.load("en_core_web_sm")
+    nlp.max_length = 2000000  # Increase the limit to 2,000,000 characters
     doc = nlp(text)
 
     # Step 3: ESG keywords with severity weights
