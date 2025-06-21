@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Menu, X, Leaf, Moon, Sun, Upload, Download, FileText, Shield, BarChart3 } from 'lucide-react';
+import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
+import Dashboard from "./components/Dashboard";
+import About from './components/About';
+import Help from './components/Help';
+import jsPDF from "jspdf";
 
 interface UploadedFile {
   name: string;
@@ -83,41 +88,43 @@ function App() {
     }
   };
 
-  const downloadReport = async () => {
-    try {
-      // Fetch ESG analysis data from the backend
-      const response = await axios.get("http://localhost:5000/api/esg-analysis");
-      if (response.status === 200) {
-        const analysisData = response.data;
-  
-        // Format the analysis data into a readable report
-        let reportContent = "ESG Risk Assessment Report\n\n";
-        reportContent += `Generated on: ${new Date().toLocaleString()}\n\n`;
-        reportContent += `Document analyzed: ${uploadedFile?.name}\n\n`;
-        reportContent += "Analysis Results:\n";
-        analysisData.forEach((item: { category: string; score: number }) => {
-          reportContent += `Category: ${item.category}\n`;
-          reportContent += `Score: ${item.score}\n\n`;
-        });
-  
-        // Create and download the report file
-        const blob = new Blob([reportContent], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "ESG_Risk_Report.txt";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } else {
-        alert("Failed to fetch analysis data.");
-      }
-    } catch (error) {
-      console.error("Error fetching analysis data:", error);
-      alert("An error occurred while generating the report.");
+
+const downloadReport = async () => {
+  try {
+    // Fetch ESG analysis data from the backend
+    const response = await axios.get("http://localhost:5000/api/esg-analysis");
+    if (response.status === 200) {
+      const analysisData = response.data;
+
+      // Initialize jsPDF
+      const doc = new jsPDF();
+
+      // Add title and metadata
+      doc.setFontSize(16);
+      doc.text("ESG Risk Assessment Report", 10, 10);
+      doc.setFontSize(12);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 10, 20);
+      doc.text(`Document analyzed: ${uploadedFile?.name || "N/A"}`, 10, 30);
+
+      // Add analysis results
+      doc.text("Analysis Results:", 10, 40);
+      let yOffset = 50; // Vertical offset for text
+      analysisData.forEach((item: { category: string; score: number }) => {
+        doc.text(`Category: ${item.category}`, 10, yOffset);
+        doc.text(`Score: ${item.score}`, 10, yOffset + 10);
+        yOffset += 20; // Move down for the next item
+      });
+
+      // Save the PDF file
+      doc.save("ESG_Risk_Report.pdf");
+    } else {
+      alert("Failed to fetch analysis data.");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching analysis data:", error);
+    alert("An error occurred while generating the report.");
+  }
+};
 
   const fetchReportData = async () => {
     try {
@@ -144,28 +151,36 @@ function App() {
   };
 
   useEffect(() => {
-    const fetchEsgAnalysis = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/esg-analysis");
-        if (response.status === 200) {
-          setEsgAnalysis(response.data.map((item: { category: string; score: number; risk_percentage: number }) => ({
-            category: item.category,
-            score: item.score,
-            risk_percentage: item.risk_percentage,
-          })));
-        } else {
-          console.error("Failed to fetch ESG analysis data.");
-        }
-      } catch (error) {
-        console.error("Error fetching ESG analysis data:", error);
+  const fetchEsgAnalysis = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/esg-analysis");
+      if (response.status === 200) {
+        const analysisData = response.data.map((item: { category: string; score: number; risk_percentage: number }) => ({
+          category: item.category,
+          score: item.score,
+          risk_percentage: item.risk_percentage,
+        }));
+
+        setEsgAnalysis(analysisData);
+
+        // Calculate overall risk percentage
+        const totalRiskPercentage = analysisData.reduce((sum: number, item: { risk_percentage: number }) => sum + item.risk_percentage, 0);
+        const overallRiskPercentage = (totalRiskPercentage / analysisData.length).toFixed(2); // Average risk percentage
+        setEsgRiskLevel(overallRiskPercentage); // Update state with the calculated value
+      } else {
+        console.error("Failed to fetch ESG analysis data.");
       }
-    };
-  
-    fetchEsgAnalysis();
-  }, []);
+    } catch (error) {
+      console.error("Error fetching ESG analysis data:", error);
+    }
+  };
+
+  fetchEsgAnalysis();
+}, []);
   // ...existing code...
 
 return (
+  <Router>
   <div className={`flex flex-col min-h-screen max-w-full transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
     {/* Navigation Bar */}
     <nav className={`${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}  shadow-md border-b transition-colors duration-300`}>
@@ -213,18 +228,6 @@ return (
     </div>
   </div>
 </nav>
-
-
-    {/* ESG Background Image */}
-   <div
-  className="h-64 w-full bg-cover bg-center object-cover lg:h-96"
-  style={{
-    backgroundImage: `url('/esgimg1.avif')`,
-  }}
->
-</div>
-
-
     {/* Sidebar Overlay */}
     {isSidebarOpen && (
       <div
@@ -234,36 +237,55 @@ return (
     )}
 
     {/* Sidebar */}
-    <div className={`fixed left-0 top-0 h-full w-64 shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : ' -translate-x-full'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-      <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
-            <Leaf className="text-white" size={20} />
-          </div>
-          <span className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} `}>ESG Portal</span>
-        </div>
+    {isSidebarOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300" onClick={toggleSidebar} />
+        )}
+<div className={`fixed left-0 top-0 h-full w-64 shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+  <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+    <div className="flex items-center space-x-3">
+      <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+        <Leaf className="text-white" size={20} />
       </div>
-      
-      <nav className="mt-6">
-        <div className="px-3 space-y-2">
-          <a href="#" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
-            <BarChart3 size={20} className="mr-3" />
-            Dashboard
-          </a>
-          <a href="#" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
-            <Shield size={20} className="mr-3" />
-            About
-          </a>
-          <a href="#" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
-            <FileText size={20} className="mr-3" />
-            Help
-          </a>
-        </div>
-      </nav>
+      <span className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ESG Portal</span>
     </div>
+  </div>
+
+  <nav className="mt-6">
+    <div className="px-3 space-y-2">
+      <Link to="/dashboard" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
+        <BarChart3 size={20} className="mr-3" />
+        Dashboard
+      </Link>
+      <Link to="/about" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
+        <Shield size={20} className="mr-3" />
+        About
+      </Link>
+      <Link to="/help" className={`flex items-center px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} rounded-lg transition-colors duration-200`}>
+        <FileText size={20} className="mr-3" />
+        Help
+      </Link>
+    </div>
+  </nav>
+</div>
 
     {/* Main Content */}
     <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-auto">
+    <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/help" element={<Help />} />
+            <Route
+              path="/"
+              element={
+                <>
+                {/* ESG Background Image */}
+   <div
+  className="h-64 w-full bg-cover bg-center object-cover lg:h-96"
+  style={{
+    backgroundImage: `url('/esgimg1.avif')`,
+  }}
+>
+</div>
       {/* Header Section */}
       <div className="mb-8">
         <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -396,18 +418,23 @@ return (
 </div>
 
             <div className="space-y-6">
-              <div className="border-l-4 border-emerald-500 pl-6">
-                <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                  Overall Risk Assessment
-                </h4>
-                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
-                  Based on the analysis of your submitted document, the overall ESG risk level is classified as <strong className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>MEDIUM</strong>.
-                </p>
-                <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
-                  <div className="bg-gradient-to-r from-emerald-500 to-teal-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-                </div>
-                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1 block`}>85% Compliance Rate</span>
-              </div>
+            <div className="border-l-4 border-emerald-500 pl-6">
+  <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+    Overall Risk Assessment
+  </h4>
+  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+    Based on the analysis of your submitted document, the overall ESG risk level is classified as <strong className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{esgRiskLevel}%</strong>.
+  </p>
+  <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
+    <div
+      className="bg-gradient-to-r from-emerald-500 to-teal-600 h-2 rounded-full"
+      style={{ width: `${esgRiskLevel}%` }}
+    ></div>
+  </div>
+  <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1 block`}>
+    {esgRiskLevel}% Compliance Rate
+  </span>
+</div>
 
               <div className="border-l-4 border-blue-500 pl-6">
                 <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white mb-2' : 'text-gray-900'}`}>
@@ -451,8 +478,13 @@ return (
             </div>
           </div>
         )}
+        </>
+      }
+      />
+    </Routes>
       </main>
     </div>
+  </Router>
   );
 }
 
