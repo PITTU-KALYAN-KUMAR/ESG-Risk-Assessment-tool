@@ -21,8 +21,7 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [esgAnalysis, setEsgAnalysis] = useState<{ category: string; score: number;risk_percentage: number }[]>([]);
-  const [esgRiskLevel, setEsgRiskLevel] = useState("");
-
+  const [esgRiskLevel, setEsgRiskLevel] = useState<string | null>(null);
   // Initialize dark mode based on system preference
   useEffect(() => {
     const darkModePreference = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -47,6 +46,21 @@ function App() {
     setIsDarkMode(!isDarkMode);
   };
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -66,6 +80,8 @@ function App() {
       if (response.status === 200) {
         const data = response.data;
         console.log("Extracted Text:", data.text);
+
+        await fetchEsgAnalysis();
   
         // Update state with uploaded file details
         setUploadedFile({
@@ -150,31 +166,27 @@ const downloadReport = async () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  useEffect(() => {
-  const fetchEsgAnalysis = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/api/esg-analysis");
-      if (response.status === 200) {
-        const analysisData = response.data.map((item: { category: string; score: number; risk_percentage: number }) => ({
-          category: item.category,
-          score: item.score,
-          risk_percentage: item.risk_percentage,
-        }));
+const fetchEsgAnalysis = async () => {
+  try {
+    const response = await axios.get("http://localhost:5000/api/esg-analysis");
+    if (response.status === 200) {
+      const analysisData = response.data.map((item: { category: string; score: number; risk_percentage: number }) => ({
+        category: item.category,
+        score: item.score,
+        risk_percentage: item.risk_percentage,
+      }));
 
-        setEsgAnalysis(analysisData);
+      setEsgAnalysis(analysisData);
 
-        // Calculate overall risk percentage
-        const totalRiskPercentage = analysisData.reduce((sum: number, item: { risk_percentage: number }) => sum + item.risk_percentage, 0);
-        const overallRiskPercentage = (totalRiskPercentage / analysisData.length).toFixed(2); // Average risk percentage
-        setEsgRiskLevel(overallRiskPercentage); // Update state with the calculated value
-      } else {
-        console.error("Failed to fetch ESG analysis data.");
-      }
-    } catch (error) {
-      console.error("Error fetching ESG analysis data:", error);
+    } else {
+      console.error("Failed to fetch ESG analysis data.");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching ESG analysis data:", error);
+  }
+};
 
+useEffect(() => {
   fetchEsgAnalysis();
 }, []);
   // ...existing code...
@@ -183,44 +195,42 @@ return (
   <Router>
   <div className={`flex flex-col min-h-screen max-w-full transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
     {/* Navigation Bar */}
-    <nav className={`${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}  shadow-md border-b transition-colors duration-300`}>
-
-  {/* on lg: take the whole width instead of a centred 7‑xl box */}
+<nav className={`${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'} shadow-md border-b transition-colors duration-300`}>
   <div className="mx-auto max-w-7xl lg:max-w-none lg:w-full px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-16">
-      {/* ───── Left section ───── */}
+      {/* Left Section */}
       <div className="flex items-center space-x-4">
         <button
           onClick={toggleSidebar}
-          className={`p-2 rounded-lg ${
-            isDarkMode
-              ? 'text-gray-300 hover:bg-gray-700'
-              : 'text-gray-600 hover:bg-gray-100'
-          } transition-colors duration-200`}
+          className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} transition-colors duration-200`}
           aria-label="Toggle menu"
         >
           {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
-
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
-            <Leaf className="text-white" size={24} />
+            <Leaf className="text-white" size={20} />
           </div>
-          <div>
-            <h1 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-xl font-bold`}>
-              ESG Risk Assessment
-            </h1>
-            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>
-              Environmental • Social • Governance
-            </p>
-          </div>
+          {windowWidth >= 372 ? (
+    <div>
+      <h1 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-lg font-bold truncate`}>
+        ESG Risk Assessment
+      </h1>
+      <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs truncate`}>
+        Environmental • Social • Governance
+      </p>
+    </div>
+  ) : (
+      <h1 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-sm font-bold truncate`}>
+        ESG Risk Assessment
+      </h1>
+    )}
         </div>
       </div>
-
-      {/* ───── Right section ───── */}
+      {/* Right Section */}
       <button
         onClick={toggleDarkMode}
-        className={`${isDarkMode ? 'dark:text-gray-300 dark:hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} p-2 rounded-lg transition-colors duration-200`}
+        className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} transition-colors duration-200`}
         aria-label="Toggle dark mode"
       >
         {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -269,11 +279,11 @@ return (
 </div>
 
     {/* Main Content */}
-    <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-auto">
+    <main className="flex-grow max-w-full lg:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-auto">
     <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/help" element={<Help />} />
+            <Route path="/dashboard" element={<Dashboard isDarkMode={isDarkMode} />} />
+            <Route path="/about" element={<About isDarkMode={isDarkMode} />} />
+            <Route path="/help" element={<Help isDarkMode={isDarkMode} />} />
             <Route
               path="/"
               element={
@@ -392,50 +402,34 @@ return (
       {/* Report Display Section */}
       {reportGenerated && (
           <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}rounded-xl shadow-lg border p-8 transition-colors duration-300`}>
-            <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900 '} mb-6`}>
+            <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6`}>
               ESG Risk Assessment Report
             </h3>
-            
+
+            {/* Dynamic Grid for ESG Analysis */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-  {esgAnalysis.map((item, index) => (
-    <div
-      key={index}
-      className={`bg-gradient-to-br ${
-        item.category === "Environmental"
-          ? "from-green-500 to-emerald-600"
-          : item.category === "Social"
-          ? "from-blue-500 to-cyan-600"
-          : "from-purple-500 to-indigo-600"
-      } rounded-lg p-6 text-white`}
-    >
-      <h4 className="text-lg font-semibold mb-2">{item.category} Score</h4>
-      <div className="text-3xl font-bold">{item.risk_percentage}%</div>
-      <p className="text-green-100 text-sm">
-        Weighted Score: {item.score}
-      </p>
-    </div>
-  ))}
-</div>
+              {esgAnalysis.map((item, index) => (
+                <div
+                  key={index}
+                  className={`bg-gradient-to-br ${
+                    item.category === "Environmental"
+                      ? "from-green-500 to-emerald-600"
+                      : item.category === "Social"
+                      ? "from-blue-500 to-cyan-600"
+                      : "from-purple-500 to-indigo-600"
+                  } rounded-lg p-6 text-white`}
+                >
+                  <h4 className="text-lg font-semibold mb-2">{item.category} Score</h4>
+                  <div className="text-3xl font-bold">{item.risk_percentage}%</div>
+                  <p className="text-green-100 text-sm">
+                    Weighted Score: {item.score}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-            <div className="space-y-6">
-            <div className="border-l-4 border-emerald-500 pl-6">
-  <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-    Overall Risk Assessment
-  </h4>
-  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
-    Based on the analysis of your submitted document, the overall ESG risk level is classified as <strong className={`${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>{esgRiskLevel}%</strong>.
-  </p>
-  <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
-    <div
-      className="bg-gradient-to-r from-emerald-500 to-teal-600 h-2 rounded-full"
-      style={{ width: `${esgRiskLevel}%` }}
-    ></div>
-  </div>
-  <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1 block`}>
-    {esgRiskLevel}% Compliance Rate
-  </span>
-</div>
-
+          <div className="space-y-6">
+            {/* Overall Risk Assessment */}
               <div className="border-l-4 border-blue-500 pl-6">
                 <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white mb-2' : 'text-gray-900'}`}>
                   Key Findings

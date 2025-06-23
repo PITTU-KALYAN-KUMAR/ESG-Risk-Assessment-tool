@@ -5,6 +5,7 @@ import os
 import pdfplumber
 from src.analyze_text import analyze_text
 from src.esg_scorecard import perform_analysis
+import csv
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -68,14 +69,20 @@ def get_esg_summary():
 
 @app.route('/api/esg-analysis', methods=['GET'])
 def get_esg_analysis():
-    df = pd.read_csv('src/esg_full_analysis.csv')
-    # Rename columns to match frontend expectations
-    df = df.rename(columns={
-        "Category": "category",
-        "Weighted ESG Risk Score": "score",
-        "Risk Percentage (%)": "risk_percentage"
-    })
-    return jsonify(df.to_dict(orient='records'))  # Convert DataFrame to list of dictionaries
+    esg_data = []
+    with open('src/esg_full_analysis.csv', 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            esg_data.append({
+                "category": row["Category"],
+                "total_esg_terms_matched": int(row["Total ESG Terms Matched"]),
+                "score": float(row["Weighted ESG Risk Score"]),
+                "unique_keywords_matched": int(row["Unique Keywords Matched"]),
+                "total_keywords_in_dictionary": int(row["Total Keywords in Dictionary"]),
+                "term_percentage": float(row["Term Percentage (%)"]),
+                "risk_percentage": float(row["Risk Percentage (%)"])
+            })
+    return jsonify(esg_data)  # Convert DataFrame to list of dictionaries
 
 @app.route('/api/esg-risk-level', methods=['GET'])
 def get_esg_risk_level():
