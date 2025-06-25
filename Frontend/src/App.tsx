@@ -24,7 +24,7 @@ function App() {
   const [] = useState<string | null>(null);
 
   // Define the backend URL directly
-  const API_BASE = "http://localhost:5000";
+  const API_BASE = "https://esg-risk-reporter.onrender.com";
 
   // Initialize dark mode based on system preference
   useEffect(() => {
