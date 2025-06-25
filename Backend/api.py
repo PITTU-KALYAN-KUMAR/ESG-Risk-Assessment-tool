@@ -8,7 +8,7 @@ from src.esg_scorecard import perform_analysis
 import csv
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["https://esg-risk-reporter.vercel.app"]}})  # Enable CORS for all routes
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": ["https://esg-risk-reporter.vercel.app"]}})  # Enable CORS for all routes
 
 def extract_text_from_pdf(pdf_path):
     text = ""
