@@ -22,6 +22,10 @@ function App() {
   const [reportGenerated, setReportGenerated] = useState(false);
   const [esgAnalysis, setEsgAnalysis] = useState<{ category: string; score: number;risk_percentage: number }[]>([]);
   const [esgRiskLevel, setEsgRiskLevel] = useState<string | null>(null);
+
+  // Define the backend URL directly
+  const API_BASE = "http://localhost:5000";
+
   // Initialize dark mode based on system preference
   useEffect(() => {
     const darkModePreference = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -71,7 +75,7 @@ function App() {
     setIsProcessing(true); // Show processing indicator
   
     try {
-      const response = await axios.post("http://localhost:5000/api/upload", formData, {
+      const response = await axios.post(`${API_BASE}/api/upload`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -108,7 +112,7 @@ function App() {
 const downloadReport = async () => {
   try {
     // Fetch ESG analysis data from the backend
-    const response = await axios.get("http://localhost:5000/api/esg-analysis");
+    const response = await axios.get(`${API_BASE}/api/esg-analysis`);
     if (response.status === 200) {
       const analysisData = response.data;
 
@@ -144,12 +148,12 @@ const downloadReport = async () => {
 
   const fetchReportData = async () => {
     try {
-      const analysisResponse = await axios.get("http://localhost:5000/api/esg-analysis");
+      const analysisResponse = await axios.get(`${API_BASE}/api/esg-analysis`);
       if (analysisResponse.status === 200) {
         setEsgAnalysis(analysisResponse.data);
       }
   
-      const riskLevelResponse = await axios.get("http://localhost:5000/api/esg-risk-level");
+      const riskLevelResponse = await axios.get(`${API_BASE}/api/esg-risk-level`);
       if (riskLevelResponse.status === 200) {
         setEsgRiskLevel(riskLevelResponse.data.risk_level);
       }
@@ -168,7 +172,7 @@ const downloadReport = async () => {
 
 const fetchEsgAnalysis = async () => {
   try {
-    const response = await axios.get("http://localhost:5000/api/esg-analysis");
+    const response = await axios.get(`${API_BASE}/api/esg-analysis`);
     if (response.status === 200) {
       const analysisData = response.data.map((item: { category: string; score: number; risk_percentage: number }) => ({
         category: item.category,

@@ -1,8 +1,8 @@
 📄 Company ESG Risk Summary Report
     ====================================
     🏢 Company Name       : Unknown
-    🕒 Date of Analysis   : 2025-06-22 15:23:01
-    📊 Total ESG Terms    : 887
-    ⚖️  Total Weighted ESG Score : 1816
+    🕒 Date of Analysis   : 2025-06-25 11:27:16
+    📊 Total ESG Terms    : 371
+    ⚖️  Total Weighted ESG Score : 641
     🔍 Final ESG Risk Level      : High Risk
     
