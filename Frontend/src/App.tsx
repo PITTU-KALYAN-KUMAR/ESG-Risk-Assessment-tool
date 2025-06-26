@@ -24,7 +24,8 @@ function App() {
   
 
   // Define the backend URL directly
-  const API_BASE = "https://esg-risk-reporter.onrender.com";
+  /*const API_BASE = "https://esg-risk-reporter.onrender.com";*/
+  const API_BASE = import.meta.env.VITE_API_URL;
 
   // Initialize dark mode based on system preference
   useEffect(() => {
