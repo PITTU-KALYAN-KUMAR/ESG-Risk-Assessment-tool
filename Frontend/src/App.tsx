@@ -21,11 +21,10 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [esgAnalysis, setEsgAnalysis] = useState<{ category: string; score: number;risk_percentage: number }[]>([]);
-  const [] = useState<string | null>(null);
+  const [esgRiskLevel, setEsgRiskLevel] = useState<string | null>(null);
 
   // Define the backend URL directly
-  const API_BASE = import.meta.env.VITE_API_URL;
-
+  const API_BASE = "http://localhost:5000";
 
   // Initialize dark mode based on system preference
   useEffect(() => {
@@ -147,6 +146,21 @@ const downloadReport = async () => {
   }
 };
 
+  const fetchReportData = async () => {
+    try {
+      const analysisResponse = await axios.get(`${API_BASE}/api/esg-analysis`);
+      if (analysisResponse.status === 200) {
+        setEsgAnalysis(analysisResponse.data);
+      }
+  
+      const riskLevelResponse = await axios.get(`${API_BASE}/api/esg-risk-level`);
+      if (riskLevelResponse.status === 200) {
+        setEsgRiskLevel(riskLevelResponse.data.risk_level);
+      }
+    } catch (error) {
+      console.error("Error fetching report data:", error);
+    }
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';

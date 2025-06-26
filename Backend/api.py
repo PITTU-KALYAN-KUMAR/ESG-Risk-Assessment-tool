@@ -8,7 +8,7 @@ from src.esg_scorecard import perform_analysis
 import csv
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, resources={r"/*": {"origins": ["https://esg-risk-reporter.vercel.app"]}})  # Enable CORS for all routes
+CORS(app)  # Enable CORS for all routes
 
 def extract_text_from_pdf(pdf_path):
     text = ""
@@ -95,5 +95,4 @@ def home():
     return jsonify({"message": "Welcome to the ESG Risk Assessment API"})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))  # Render will set PORT env var
-    app.run(debug=False, host="0.0.0.0", port=port)
+    app.run(debug=True)
