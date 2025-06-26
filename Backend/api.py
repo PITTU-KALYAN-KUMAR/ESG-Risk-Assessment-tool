@@ -1,3 +1,4 @@
+import io
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
@@ -11,7 +12,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": [
     "https://esg-risk-reporter.vercel.app"
 ]}})
-def extract_text_from_pdf(pdf_path):
+'''def extract_text_from_pdf(pdf_path):
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
         print(f"📄 Opened {pdf_path} with {len(pdf.pages)} pages")
@@ -60,7 +61,50 @@ def upload_file():
             return jsonify({"error": "No text found in the PDF"}), 400
     except Exception as e:
         print(f"Error during file upload: {e}")  # Debugging statement
+        return jsonify({"error": str(e)}), 500'''
+
+def extract_text_from_pdf(file_bytes):
+    text = ""
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        print(f"📄 PDF opened with {len(pdf.pages)} pages")
+        for i, page in enumerate(pdf.pages):
+            page_text = page.extract_text()
+            print(f"📃 Page {i + 1}: {'✅ Text' if page_text else '❌ No text'}")
+            if page_text:
+                text += page_text + "\n"
+    return text
+
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    try:
+        file_bytes = file.read()  # Read in-memory
+        text = extract_text_from_pdf(file_bytes)
+
+        if text.strip():
+            # Optional: Save text to a temp file
+            extracted_text_path = 'src/extracted_text.txt'
+            with open(extracted_text_path, 'w', encoding='utf-8') as f:
+                f.write(text)
+
+            # Run your analysis using that temp file
+            perform_analysis(extracted_text_path)
+            analyze_text(extracted_text_path)
+
+            return jsonify({"message": "File uploaded and analysis completed"}), 200
+        else:
+            return jsonify({"error": "No text found in the PDF"}), 400
+
+    except Exception as e:
+        print(f"🚨 Error during file upload: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/esg-summary', methods=['GET'])
 def get_esg_summary():
