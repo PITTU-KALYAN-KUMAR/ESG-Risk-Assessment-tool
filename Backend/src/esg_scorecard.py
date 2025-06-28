@@ -1,13 +1,16 @@
 import spacy
 import pandas as pd
 import numpy as np
-from tabulate import tabulate
+from datetime import datetime
+import re
 import os
 
-def perform_analysis(extracted_text_path):
+from src.memory_store import memory_store
+
+def perform_analysis(text: str):
     # Step 1: Load extracted text
-    with open(extracted_text_path, "r", encoding="utf-8") as f:
-        text = f.read().lower()
+    text = text.lower()
+    memory_store["extracted_text"] = text
 
     # Step 2: Load SpaCy NLP model
     nlp = spacy.load("en_core_web_sm")
@@ -58,13 +61,10 @@ def perform_analysis(extracted_text_path):
     }
 
     # Step 4: Score Calculation
-    category_weighted_scores = {}
-    category_total_counts = {}
+    lemmas = [token.lemma_ for token in doc]
     total_weighted_score = 0
     total_keyword_matches = 0
     analysis_data = []
-
-    lemmas = [token.lemma_ for token in doc]
 
     for category, keywords in esg_risk_keywords.items():
         weighted_score = 0
@@ -72,20 +72,13 @@ def perform_analysis(extracted_text_path):
         matched_keywords = 0
 
         for kw, severity in keywords.items():
-            # Multi-word match (e.g., "child labor")
-            if " " in kw:
-                count = text.count(kw)
-            else:
-                count = lemmas.count(nlp(kw)[0].lemma_)
-
+            count = text.count(kw) if " " in kw else lemmas.count(nlp(kw)[0].lemma_)
             score = count * severity
             weighted_score += score
             total_count += count
             if count > 0:
                 matched_keywords += 1
 
-        category_weighted_scores[category] = weighted_score
-        category_total_counts[category] = total_count
         total_weighted_score += weighted_score
         total_keyword_matches += total_count
 
@@ -102,73 +95,29 @@ def perform_analysis(extracted_text_path):
         entry["Risk Percentage (%)"] = round((entry["Weighted ESG Risk Score"] / total_weighted_score) * 100, 2) if total_weighted_score else 0
         entry["Term Percentage (%)"] = round((entry["Total ESG Terms Matched"] / total_keyword_matches) * 100, 2) if total_keyword_matches else 0
 
-    # Ensure the `src` folder exists
-    src_folder = os.path.join(os.getcwd(), "src")
-    os.makedirs(src_folder, exist_ok=True)
 
     # Step 6: Save scorecard summary
-    final_scorecard_path = os.path.join(src_folder, "esg_final_scorecard.txt")
-    with open(final_scorecard_path, "w", encoding="utf-8") as f:
-        for entry in analysis_data:
-            category = entry["Category"]
-            ws = category_weighted_scores[category]
-            tc = category_total_counts[category]
-            ws_pct = entry["Risk Percentage (%)"]
-            tc_pct = entry["Term Percentage (%)"]
-            f.write(f"{category} -> Terms: {tc} ({tc_pct:.2f}%), Weighted Score: {ws} ({ws_pct:.2f}%)\n")
-
-        f.write(f"\nTotal Terms: {total_keyword_matches}\nTotal Weighted ESG Risk Score: {total_weighted_score}\n")
-
-    print(f"✅ Summary saved to {final_scorecard_path}")
-
-    # Step 7: Save full analysis CSV
-    full_analysis_path = os.path.join(src_folder, "esg_full_analysis.csv")
     df = pd.DataFrame(analysis_data)
-    df = df[[
-        "Category", "Total ESG Terms Matched", "Weighted ESG Risk Score",
-        "Unique Keywords Matched", "Total Keywords in Dictionary",
-        "Term Percentage (%)", "Risk Percentage (%)"
-    ]]
-    df.to_csv(full_analysis_path, index=False)
-    print(f"✅ Full analysis saved to {full_analysis_path}")
-
-    # Step 8: Determine company ESG risk level
-    risk_level_path = os.path.join(src_folder, "company_esg_risk_level.txt")
+    memory_store["scorecard"] = analysis_data
+    memory_store["analysis_table"] = df
+    
+    # Step 7: Determine company ESG risk level
     if total_weighted_score <= 30:
         risk_level = "Low Risk"
     elif total_weighted_score <= 70:
         risk_level = "Medium Risk"
     else:
         risk_level = "High Risk"
-
-    with open(risk_level_path, "w", encoding="utf-8") as f:
-        f.write(f"Company ESG Risk Level: {risk_level}\n")
-        f.write(f"Total ESG Terms: {total_keyword_matches}\n")
-        f.write(f"Total ESG Weighted Score: {total_weighted_score}\n")
-
-    print(f"✅ Company ESG risk level saved to {risk_level_path}")
-
+    memory_store["risk_level"] = risk_level
     # Step 9: Save company ESG risk summary
-    summary_path = os.path.join(src_folder, "company_esg_risk_summary.txt")
-    from datetime import datetime
-    import re
-
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    company_name = "Unknown"
     company_match = re.search(r"(?:company\s*name\s*[:\-]?\s*|^)([A-Z][a-zA-Z&,\s]+(?:Inc|Ltd|Corporation|Corp|LLC|Group|Co\.|Limited))", text, re.IGNORECASE)
-    if company_match:
-        company_name = company_match.group(1).strip()
-
-    summary_text = f"""📄 Company ESG Risk Summary Report
-    ====================================
-    🏢 Company Name       : {company_name}
-    🕒 Date of Analysis   : {timestamp}
-    📊 Total ESG Terms    : {total_keyword_matches}
-    ⚖️  Total Weighted ESG Score : {total_weighted_score}
-    🔍 Final ESG Risk Level      : {risk_level}
-    """
-
-    with open(summary_path, "w", encoding="utf-8") as f:
-        f.write(summary_text)
-
-    print(f"✅ Final ESG summary saved to {summary_path}")
+    company_name = company_match.group(1).strip() if company_match else "Unknown"
+    summary = f"""Company ESG Risk Summary Report
+====================================
+Company Name       : {company_name}
+Date of Analysis   : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Total ESG Terms    : {total_keyword_matches}
+Total Weighted ESG Score : {total_weighted_score}
+Final ESG Risk Level      : {risk_level}
+"""
+    memory_store["summary_text"] = summary

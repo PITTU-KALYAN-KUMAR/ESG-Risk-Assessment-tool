@@ -1,78 +1,24 @@
-import io
+# api.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import pandas as pd
-import os
 import pdfplumber
+from io import BytesIO
+
 from src.analyze_text import analyze_text
 from src.esg_scorecard import perform_analysis
-import csv
+from src.memory_store import memory_store
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": [
-    "https://esg-risk-reporter.vercel.app"
-]}})
-'''def extract_text_from_pdf(pdf_path):
+CORS(app)  # Enable CORS for all routes
+
+def extract_text_from_pdf(file_stream):
     text = ""
-    with pdfplumber.open(pdf_path) as pdf:
-        print(f"📄 Opened {pdf_path} with {len(pdf.pages)} pages")
-        for i, page in enumerate(pdf.pages):
+    with pdfplumber.open(file_stream) as pdf:
+        for page in pdf.pages:
             page_text = page.extract_text()
-            print(f"📃 Page {i + 1}: {'✅ Text' if page_text else '❌ No text'}")
             if page_text:
                 text += page_text + "\n"
-    return text
-
-@app.route('/api/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
-    # Save the uploaded file
-    upload_folder = os.path.join(os.getcwd(), 'uploads')
-    os.makedirs(upload_folder, exist_ok=True)
-    file_path = os.path.join(upload_folder, file.filename)
-    print(f"Saving file to: {file_path}")  # Debugging statement
-    file.save(file_path)
-
-    # Extract text from the uploaded file
-    try:
-        text = extract_text_from_pdf(file_path)
-        print(f"Extracted text: {text[:100]}")  # Debugging statement
-
-        if text.strip():
-            # Save extracted text to extracted_text.txt
-            extracted_text_path = os.path.join(os.getcwd(), 'src', 'extracted_text.txt')
-            with open(extracted_text_path, 'w', encoding='utf-8') as f:
-                f.write(text)
-
-            # Perform dynamic analysis using esg_scorecard.py
-            perform_analysis(extracted_text_path)
-
-            # Perform additional analysis using analyze_text.py
-            analyze_text(extracted_text_path)
-
-            return jsonify({"message": "File uploaded and analysis completed"}), 200
-        else:
-            return jsonify({"error": "No text found in the PDF"}), 400
-    except Exception as e:
-        print(f"Error during file upload: {e}")  # Debugging statement
-        return jsonify({"error": str(e)}), 500'''
-
-def extract_text_from_pdf(file_bytes):
-    text = ""
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        print(f"📄 PDF opened with {len(pdf.pages)} pages")
-        for i, page in enumerate(pdf.pages):
-            page_text = page.extract_text()
-            print(f"📃 Page {i + 1}: {'✅ Text' if page_text else '❌ No text'}")
-            if page_text:
-                text += page_text + "\n"
-    return text
+    return text.strip()
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -84,61 +30,74 @@ def upload_file():
         return jsonify({"error": "No selected file"}), 400
 
     try:
-        file_bytes = file.read()  # Read in-memory
-        text = extract_text_from_pdf(file_bytes)
+        # Extract text from uploaded PDF (in-memory)
+        file_stream = BytesIO(file.read())
+        text = extract_text_from_pdf(file_stream)
 
-        if text.strip():
-            # Optional: Save text to a temp file
-            extracted_text_path = 'src/extracted_text.txt'
-            with open(extracted_text_path, 'w', encoding='utf-8') as f:
-                f.write(text)
-
-            # Run your analysis using that temp file
-            perform_analysis(extracted_text_path)
-            analyze_text(extracted_text_path)
-
-            return jsonify({"message": "File uploaded and analysis completed"}), 200
-        else:
+        if not text:
             return jsonify({"error": "No text found in the PDF"}), 400
 
+        memory_store["extracted_text"] = text  # Save text in memory
+
+        # Perform analysis (in-memory)
+        perform_analysis(text)
+        analyze_text(text)
+
+        return jsonify({"message": "File uploaded and analysis completed"}), 200
+
     except Exception as e:
-        print(f"🚨 Error during file upload: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/api/esg-summary', methods=['GET'])
 def get_esg_summary():
-    with open('src/esg_final_scorecard.txt', 'r') as file:
-        data = file.read()
-    return jsonify({"summary": data})
+    summary = memory_store.get("summary_text", "")
+    return jsonify({"summary": summary})
 
 @app.route('/api/esg-analysis', methods=['GET'])
 def get_esg_analysis():
-    esg_data = []
-    with open('src/esg_full_analysis.csv', 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            esg_data.append({
-                "category": row["Category"],
-                "total_esg_terms_matched": int(row["Total ESG Terms Matched"]),
-                "score": float(row["Weighted ESG Risk Score"]),
-                "unique_keywords_matched": int(row["Unique Keywords Matched"]),
-                "total_keywords_in_dictionary": int(row["Total Keywords in Dictionary"]),
-                "term_percentage": float(row["Term Percentage (%)"]),
-                "risk_percentage": float(row["Risk Percentage (%)"])
-            })
-    return jsonify(esg_data)  # Convert DataFrame to list of dictionaries
+    df = memory_store.get("analysis_table")
+    if df is not None:
+        # Rename all columns to match frontend expectations
+        df = df.rename(columns={
+            "Category": "category",
+            "Risk Percentage (%)": "risk_percentage",
+            "Term Percentage (%)": "term_percentage",
+            "Total ESG Terms Matched": "total_esg_terms_matched",
+            "Unique Keywords Matched": "unique_keywords_matched",
+            "Total Keywords in Dictionary": "total_keywords_in_dictionary",
+            "Weighted ESG Risk Score": "score"
+        })
+        # Fill missing values with defaults
+        df = df.fillna({
+            "category": "Unknown Category",
+            "risk_percentage": 0,
+            "term_percentage": 0,
+            "total_esg_terms_matched": 0,
+            "unique_keywords_matched": 0,
+            "total_keywords_in_dictionary": 0,
+            "score": 0
+        })
+        return jsonify(df.to_dict(orient="records"))
+    return jsonify([])
 
 @app.route('/api/esg-risk-level', methods=['GET'])
 def get_esg_risk_level():
-    with open('src/company_esg_risk_level.txt', 'r') as file:
-        data = file.read()
-    return jsonify({"risk_level": data})
+    risk = memory_store.get("risk_level", "Unknown")
+    return jsonify({"risk_level": risk})
+
+@app.route('/api/risk-keywords', methods=['GET'])
+def get_risk_keywords():
+    counts = memory_store.get("risk_keywords_count", {})
+    return jsonify(dict(counts))
+
+@app.route('/api/risk-sentences', methods=['GET'])
+def get_risk_sentences():
+    sentences = memory_store.get("risk_sentences", [])
+    return jsonify(sentences)
 
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({"message": "Welcome to the ESG Risk Assessment API"})
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=False, host="0.0.0.0", port=port)
+    app.run(debug=True)

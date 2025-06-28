@@ -1,9 +1,10 @@
 import re
 from collections import Counter
-def analyze_text(extracted_text_path):
+from src.memory_store import memory_store
+
+def analyze_text(text: str):
     # Step 1: Load ESG extracted text
-    with open(extracted_text_path, "r", encoding="utf-8") as f:
-        text = f.read().lower()
+    text = text.lower()
 
     # Step 2: Define ESG red flag keywords
     risk_keywords = [
@@ -53,8 +54,5 @@ def analyze_text(extracted_text_path):
         f.write("\n\n".join(risky_sentences))
 
     # Step 6: Print summary
-    print(f"✅ Found {len(risky_sentences)} potential risk-related sentences.")
-    print("📄 Saved to risk_sentences.txt")
-    print("\n📊 Top 20 ESG Risk Keyword Counts:")
-    for kw, count in keyword_counts.most_common(20):
-        print(f"{kw}: {count}")
+    memory_store["risk_sentences"] = risky_sentences
+    memory_store["risk_keywords_count"] = keyword_counts

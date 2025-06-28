@@ -21,11 +21,11 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [esgAnalysis, setEsgAnalysis] = useState<{ category: string; score: number;risk_percentage: number }[]>([]);
-  
+  const [esgSummary, setEsgSummary] = useState<any>(null);
+  const [esgRiskLevel, setEsgRiskLevel] = useState<string | null>(null);
 
   // Define the backend URL directly
-  /*const API_BASE = "https://esg-risk-reporter.onrender.com";*/
-  const API_BASE = import.meta.env.VITE_API_URL;
+  const API_BASE = "http://localhost:5000";
 
   // Initialize dark mode based on system preference
   useEffect(() => {
@@ -72,23 +72,11 @@ function App() {
   
     const formData = new FormData();
     formData.append("file", file);
-  
-    setIsProcessing(true); // Show processing indicator
+    setIsProcessing(true);
   
     try {
-      const response = await axios.post(`${API_BASE}/api/upload`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-  
-      if (response.status === 200) {
-        const data = response.data;
-        console.log("Extracted Text:", data.text);
-
-        await fetchEsgAnalysis();
-  
-        // Update state with uploaded file details
+      const uploadRes = await axios.post(`${API_BASE}/api/upload`, formData);
+      if (uploadRes.status === 200) {
         setUploadedFile({
           name: file.name,
           size: file.size,
@@ -96,56 +84,103 @@ function App() {
           uploadDate: new Date(),
         });
   
-        setReportGenerated(true); // Indicate that the report is ready
-      } else {
-        console.error("Error:", response.data.error);
-        alert(`Error: ${response.data.error}`);
+        const [analysisRes, summaryRes, riskRes] = await Promise.all([
+          axios.get(`${API_BASE}/api/esg-analysis`),
+          axios.get(`${API_BASE}/api/esg-summary`),
+          axios.get(`${API_BASE}/api/esg-risk-level`),
+        ]);
+  
+        setEsgAnalysis(analysisRes.data);
+        setEsgSummary(summaryRes.data);
+        setEsgRiskLevel(riskRes.data.risk_level);
+        setReportGenerated(true);
       }
     } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Failed to upload the file. Please try again.");
+      alert("Upload or analysis failed.");
     } finally {
-      setIsProcessing(false); // Hide processing indicator
+      setIsProcessing(false);
     }
   };
 
-
-const downloadReport = async () => {
-  try {
-    // Fetch ESG analysis data from the backend
-    const response = await axios.get(`${API_BASE}/api/esg-analysis`);
-    if (response.status === 200) {
-      const analysisData = response.data;
-
-      // Initialize jsPDF
+  const downloadReport = async () => {
+    if (!uploadedFile) {
+      alert("No file uploaded");
+      return;
+    }
+  
+    try {
+      // Fetch dynamic data from the backend
+      const analysisRes = await axios.get(`${API_BASE}/api/esg-analysis`);
+      const summaryRes = await axios.get(`${API_BASE}/api/esg-summary`);
+      const riskLevelRes = await axios.get(`${API_BASE}/api/esg-risk-level`);
+  
+      const esgAnalysis = analysisRes.data || [];
+      const esgSummary = summaryRes.data.summary || "No summary available.";
+      const esgRiskLevel = riskLevelRes.data.risk_level || "Unknown";
+  
+      if (!esgAnalysis.length || !esgSummary || !esgRiskLevel) {
+        alert("Analysis data incomplete");
+        return;
+      }
+  
+      // Generate the PDF
       const doc = new jsPDF();
-
-      // Add title and metadata
       doc.setFontSize(16);
       doc.text("ESG Risk Assessment Report", 10, 10);
+  
       doc.setFontSize(12);
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 10, 20);
-      doc.text(`Document analyzed: ${uploadedFile?.name || "N/A"}`, 10, 30);
-
-      // Add analysis results
-      doc.text("Analysis Results:", 10, 40);
-      let yOffset = 50; // Vertical offset for text
-      analysisData.forEach((item: { category: string; score: number }) => {
-        doc.text(`Category: ${item.category}`, 10, yOffset);
-        doc.text(`Score: ${item.score}`, 10, yOffset + 10);
-        yOffset += 20; // Move down for the next item
+      doc.text(`Document: ${uploadedFile.name}`, 10, 30);
+      doc.text(`ESG Risk Level: ${esgRiskLevel}`, 10, 40);
+  
+      doc.text("Summary:", 10, 50);
+      doc.setFontSize(10);
+      let y = 60;
+  
+      // Format the summary text to avoid unstructured content
+      const formattedSummary = esgSummary.split("\n").map((line: string) => line.trim());
+      formattedSummary.forEach((line: string) => {
+        doc.text(line, 10, y);
+        y += 6;
       });
-
-      // Save the PDF file
+  
+      doc.setFontSize(12);
+      doc.text("Category Analysis:", 10, y + 10);
+      y += 20;
+  
+      // Dynamically add ESG analysis data
+      esgAnalysis.forEach((item: any) => {
+        const category = item.category || "Unknown Category";
+        const riskPercentage = item.risk_percentage !== undefined ? `${item.risk_percentage}%` : "N/A";
+        const termPercentage = item.term_percentage !== undefined ? `${item.term_percentage}%` : "N/A";
+        const totalTerms = item.total_esg_terms_matched || "N/A";
+        const uniqueKeywords = item.unique_keywords_matched || "N/A";
+        const totalKeywords = item.total_keywords_in_dictionary || "N/A";
+        const weightedScore = item.score || "N/A";
+  
+        doc.setFontSize(10);
+        doc.text(`• ${category}:`, 10, y);
+        y += 6;
+        doc.text(`   Risk Percentage: ${riskPercentage}`, 12, y);
+        y += 6;
+        doc.text(`   Term Percentage: ${termPercentage}`, 12, y);
+        y += 6;
+        doc.text(`   Total ESG Terms Matched: ${totalTerms}`, 12, y);
+        y += 6;
+        doc.text(`   Unique Keywords Matched: ${uniqueKeywords}`, 12, y);
+        y += 6;
+        doc.text(`   Total Keywords in Dictionary: ${totalKeywords}`, 12, y);
+        y += 6;
+        doc.text(`   Weighted ESG Risk Score: ${weightedScore}`, 12, y);
+        y += 10;
+      });
+  
       doc.save("ESG_Risk_Report.pdf");
-    } else {
-      alert("Failed to fetch analysis data.");
+    } catch (error) {
+      console.error("Error generating report:", error);
+      alert("Failed to generate the report. Please try again.");
     }
-  } catch (error) {
-    console.error("Error fetching analysis data:", error);
-    alert("An error occurred while generating the report.");
-  }
-};
+  };
 
 
   const formatFileSize = (bytes: number) => {
@@ -156,18 +191,21 @@ const downloadReport = async () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-const fetchEsgAnalysis = async () => {
+  const fetchEsgAnalysis = async () => {
   try {
     const response = await axios.get(`${API_BASE}/api/esg-analysis`);
     if (response.status === 200) {
-      const analysisData = response.data.map((item: { category: string; score: number; risk_percentage: number }) => ({
-        category: item.category,
-        score: item.score,
-        risk_percentage: item.risk_percentage,
+      const analysisData = response.data.map((item: {
+        Category: string;
+        "Risk Percentage (%)": number;
+        "Weighted ESG Risk Score": number;
+      }) => ({
+        category: item.Category,
+        risk_percentage: item["Risk Percentage (%)"],
+        score: item["Weighted ESG Risk Score"],
       }));
 
       setEsgAnalysis(analysisData);
-
     } else {
       console.error("Failed to fetch ESG analysis data.");
     }
@@ -175,6 +213,7 @@ const fetchEsgAnalysis = async () => {
     console.error("Error fetching ESG analysis data:", error);
   }
 };
+  
 
 useEffect(() => {
   fetchEsgAnalysis();
