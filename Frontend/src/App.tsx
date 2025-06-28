@@ -110,16 +110,8 @@ function App() {
     }
   
     try {
-      // Fetch dynamic data from the backend
-      const analysisRes = await axios.get(`${API_BASE}/api/esg-analysis`);
-      const summaryRes = await axios.get(`${API_BASE}/api/esg-summary`);
-      const riskLevelRes = await axios.get(`${API_BASE}/api/esg-risk-level`);
-  
-      const esgAnalysis = analysisRes.data || [];
-      const esgSummary = summaryRes.data.summary || "No summary available.";
-      const esgRiskLevel = riskLevelRes.data.risk_level || "Unknown";
-  
-      if (!esgAnalysis.length || !esgSummary || !esgRiskLevel) {
+      // Use the state values directly
+      if (!esgSummary || !esgRiskLevel || !esgAnalysis.length) {
         alert("Analysis data incomplete");
         return;
       }
