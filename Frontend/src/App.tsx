@@ -21,8 +21,8 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [esgAnalysis, setEsgAnalysis] = useState<{ category: string; score: number;risk_percentage: number }[]>([]);
-  const [esgSummary, setEsgSummary] = useState<any>(null);
-  const [esgRiskLevel, setEsgRiskLevel] = useState<string | null>(null);
+  //const [esgSummary, setEsgSummary] = useState<any>(null);
+  //const [esgRiskLevel, setEsgRiskLevel] = useState<string | null>(null);
 
   // Define the backend URL directly
   //const API_BASE = "http://localhost:5000";
@@ -85,15 +85,21 @@ function App() {
           uploadDate: new Date(),
         });
   
+        // Declare local variables for esgSummary and esgRiskLevel
         const [analysisRes, summaryRes, riskRes] = await Promise.all([
           axios.get(`${API_BASE}/api/esg-analysis`),
           axios.get(`${API_BASE}/api/esg-summary`),
           axios.get(`${API_BASE}/api/esg-risk-level`),
         ]);
   
+        const esgSummary = summaryRes.data.summary || "No summary available.";
+        const esgRiskLevel = riskRes.data.risk_level || "Unknown";
+  
+        // Use esgSummary and esgRiskLevel locally or pass them to other functions
+        console.log("ESG Summary:", esgSummary);
+        console.log("ESG Risk Level:", esgRiskLevel);
+  
         setEsgAnalysis(analysisRes.data);
-        setEsgSummary(summaryRes.data);
-        setEsgRiskLevel(riskRes.data.risk_level);
         setReportGenerated(true);
       }
     } catch (error) {
@@ -110,8 +116,16 @@ function App() {
     }
   
     try {
-      // Use the state values directly
-      if (!esgSummary || !esgRiskLevel || !esgAnalysis.length) {
+      // Fetch dynamic data from the backend
+      const analysisRes = await axios.get(`${API_BASE}/api/esg-analysis`);
+      const summaryRes = await axios.get(`${API_BASE}/api/esg-summary`);
+      const riskLevelRes = await axios.get(`${API_BASE}/api/esg-risk-level`);
+  
+      const esgAnalysis = analysisRes.data || [];
+      const esgSummary = summaryRes.data.summary || "No summary available.";
+      const esgRiskLevel = riskLevelRes.data.risk_level || "Unknown";
+  
+      if (!esgAnalysis.length || !esgSummary || !esgRiskLevel) {
         alert("Analysis data incomplete");
         return;
       }
@@ -395,31 +409,44 @@ return (
 </div>
 
       {/* Download Report Section */}
-      {reportGenerated && (
-        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-8 mb-8 transition-colors duration-300`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <Download className="text-white" size={20} />
-              </div>
-              <div>
-                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Report Generated Successfully
-                </h3>
-                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Your ESG risk assessment report is ready for download
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={downloadReport}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
-            >
-              Download Report
-            </button>
-          </div>
+      {/* Download Report Section */}
+{reportGenerated && (
+  <div
+    className={`${
+      isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+    } rounded-xl shadow-lg border p-6 sm:p-8 mb-8 transition-colors duration-300`}
+  >
+    <div className="flex flex-col sm:flex-row items-center sm:justify-between space-y-4 sm:space-y-0">
+      <div className="flex items-center space-x-4">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <Download className="text-white" size={20} />
         </div>
-      )}
+        <div>
+          <h3
+            className={`text-lg font-semibold ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}
+          >
+            Report Generated Successfully
+          </h3>
+          <p
+            className={`${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            } text-sm`}
+          >
+            Your ESG risk assessment report is ready for download
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={downloadReport}
+        className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+      >
+        Download Report
+      </button>
+    </div>
+  </div>
+)}
 
       {/* Report Display Section */}
       {reportGenerated && (
