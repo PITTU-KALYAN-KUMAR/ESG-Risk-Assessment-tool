@@ -25,8 +25,8 @@ function App() {
   //const [esgRiskLevel, setEsgRiskLevel] = useState<string | null>(null);
 
   // Define the backend URL directly
-  //const API_BASE = "http://localhost:5000";
-  const API_BASE = import.meta.env.VITE_API_URL;
+  const API_BASE = "https://esg-risk-reporter.onrender.com";
+  //const API_BASE = import.meta.env.VITE_API_URL;
 
   // Initialize dark mode based on system preference
   useEffect(() => {
